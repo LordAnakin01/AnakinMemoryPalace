@@ -2,183 +2,214 @@
 
 import { useMemo, useState, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Text, Html, Sparkles } from "@react-three/drei";
+import { OrbitControls, Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 const STOP_COLORS = {
-  default: "#6b3fa0",
-  hover:   "#9060d0",
+  default: "#8a7550",
+  hover:   "#c9a02c",
   active:  "#ffc300",
   correct: "#00c853",
   wrong:   "#ff4444",
 };
 
-const ROOM_RADIUS   = 7;
-const ROOM_HEIGHT   = 5.8;
-const PEDESTAL_RADIUS = 4.2;
-const COL_RADIUS    = ROOM_RADIUS - 0.55;
-const COL_COUNT     = 12;
+// Grounds run along Z: the gate sits at the near/front edge, the manor at
+// the far end — stops are laid out as waypoints along that central path,
+// echoing a real estate's gate-to-residence promenade.
+const GROUND_WIDTH = 15;
+const GROUND_DEPTH = 22;
+const GATE_Z = GROUND_DEPTH / 2 - 1.6;
+const MANSION_Z = -GROUND_DEPTH / 2 + 3.4;
+const GATE_GAP = 2.4;
 
 function layoutPositions(count) {
+  if (count === 0) return [];
   return Array.from({ length: count }, (_, i) => {
-    const angle = (i / count) * Math.PI * 2;
-    return [Math.cos(angle) * PEDESTAL_RADIUS, 0, Math.sin(angle) * PEDESTAL_RADIUS];
+    const t = (i + 1) / (count + 1);
+    const z = THREE.MathUtils.lerp(GATE_Z - 1.6, MANSION_Z + 3.8, t);
+    const side = i % 2 === 0 ? 1 : -1;
+    const bulge = Math.sin(t * Math.PI) * 0.7;
+    return [side * (1.9 + bulge), 0, z];
   });
 }
 
-function PalaceFloor() {
+function Lawn() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[GROUND_WIDTH, GROUND_DEPTH]} />
+      <meshStandardMaterial color="#2e4d33" roughness={0.95} />
+    </mesh>
+  );
+}
+
+function Walkway() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]}>
+      <planeGeometry args={[1.7, GROUND_DEPTH - 2]} />
+      <meshStandardMaterial color="#cbbfa0" roughness={0.8} />
+    </mesh>
+  );
+}
+
+function HedgeBorder() {
+  const th = 0.6;
+  const h = 0.55;
+  const sideLen = (GROUND_WIDTH - GATE_GAP) / 2;
+  const color = "#24401f";
   return (
     <group>
-      {/* base — deep jewel teal */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[ROOM_RADIUS, 48]} />
-        <meshStandardMaterial color="#0a2230" roughness={0.85} metalness={0.15} />
+      <mesh position={[-(GATE_GAP / 2 + sideLen / 2), h / 2, GROUND_DEPTH / 2 - th / 2]}>
+        <boxGeometry args={[sideLen, h, th]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
-      {/* outer gold ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <ringGeometry args={[ROOM_RADIUS - 0.55, ROOM_RADIUS - 0.15, 48]} />
-        <meshStandardMaterial color="#ffc300" emissive="#ffc300" emissiveIntensity={0.6} roughness={0.3} />
+      <mesh position={[GATE_GAP / 2 + sideLen / 2, h / 2, GROUND_DEPTH / 2 - th / 2]}>
+        <boxGeometry args={[sideLen, h, th]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
-      {/* rose ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <ringGeometry args={[ROOM_RADIUS - 1.25, ROOM_RADIUS - 1.0, 48]} />
-        <meshStandardMaterial color="#ff3d82" emissive="#ff3d82" emissiveIntensity={0.5} />
+      <mesh position={[0, h / 2, -GROUND_DEPTH / 2 + th / 2]}>
+        <boxGeometry args={[GROUND_WIDTH, h, th]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
-      {/* cyan pedestal-track ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <ringGeometry args={[PEDESTAL_RADIUS + 0.7, PEDESTAL_RADIUS + 0.9, 48]} />
-        <meshStandardMaterial color="#00d8e0" emissive="#00d8e0" emissiveIntensity={0.45} />
+      <mesh position={[GROUND_WIDTH / 2 - th / 2, h / 2, 0]}>
+        <boxGeometry args={[th, h, GROUND_DEPTH]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
-      {/* amethyst inner ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <ringGeometry args={[1.45, 1.65, 48]} />
-        <meshStandardMaterial color="#cc44ff" emissive="#cc44ff" emissiveIntensity={0.6} />
-      </mesh>
-      {/* centre disc */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <circleGeometry args={[1.4, 48]} />
-        <meshStandardMaterial color="#1a0838" roughness={0.7} />
+      <mesh position={[-GROUND_WIDTH / 2 + th / 2, h / 2, 0]}>
+        <boxGeometry args={[th, h, GROUND_DEPTH]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
     </group>
   );
 }
 
-function PalaceWalls() {
+function Gate() {
+  const pillarH = 1.8;
   return (
-    <group>
-      {/* inner wall — royal purple */}
-      <mesh position={[0, ROOM_HEIGHT / 2, 0]}>
-        <cylinderGeometry args={[ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT, 24, 1, true]} />
-        <meshStandardMaterial color="#2a1258" side={THREE.BackSide} roughness={0.88} />
-      </mesh>
-      {/* ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT, 0]}>
-        <circleGeometry args={[ROOM_RADIUS, 24]} />
-        <meshStandardMaterial color="#180830" side={THREE.BackSide} />
-      </mesh>
-      {/* ceiling centre — cyan glow */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT - 0.01, 0]}>
-        <circleGeometry args={[2.0, 24]} />
-        <meshStandardMaterial color="#00d8ff" emissive="#00d8ff" emissiveIntensity={0.35} side={THREE.BackSide} />
-      </mesh>
-      {/* baseboard — gold */}
-      <mesh position={[0, 0.26, 0]}>
-        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.22, 6, 48]} />
-        <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.55} />
-      </mesh>
-      {/* cornice — gold */}
-      <mesh position={[0, ROOM_HEIGHT - 0.32, 0]}>
-        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.22, 6, 48]} />
-        <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.55} />
-      </mesh>
-      {/* upper band — rose */}
-      <mesh position={[0, ROOM_HEIGHT * 0.62, 0]}>
-        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.07, 6, 48]} />
-        <meshStandardMaterial color="#ff3d82" emissive="#ff3d82" emissiveIntensity={0.5} />
-      </mesh>
-      {/* lower band — cyan */}
-      <mesh position={[0, ROOM_HEIGHT * 0.28, 0]}>
-        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.05, 6, 48]} />
-        <meshStandardMaterial color="#00d8e0" emissive="#00d8e0" emissiveIntensity={0.4} />
+    <group position={[0, 0, GROUND_DEPTH / 2]}>
+      {[-1, 1].map((side) => (
+        <group key={side} position={[side * (GATE_GAP / 2 + 0.3), 0, 0]}>
+          <mesh position={[0, pillarH / 2, 0]}>
+            <boxGeometry args={[0.5, pillarH, 0.5]} />
+            <meshStandardMaterial color="#e4d9bd" roughness={0.6} />
+          </mesh>
+          <mesh position={[0, pillarH + 0.15, 0]}>
+            <sphereGeometry args={[0.22, 12, 12]} />
+            <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={0.5} roughness={0.4} metalness={0.4} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, pillarH + 0.3, 0]}>
+        <boxGeometry args={[GATE_GAP + 1.2, 0.15, 0.15]} />
+        <meshStandardMaterial color="#c9a02c" metalness={0.5} roughness={0.4} />
       </mesh>
     </group>
   );
 }
 
-function Column({ position }) {
+function Tree({ position }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.16, 0]}>
-        <cylinderGeometry args={[0.24, 0.3, 0.32, 8]} />
-        <meshStandardMaterial color="#d4b050" roughness={0.55} metalness={0.4} />
+      <mesh position={[0, 0.35, 0]}>
+        <cylinderGeometry args={[0.08, 0.11, 0.7, 6]} />
+        <meshStandardMaterial color="#4a3524" roughness={0.9} />
       </mesh>
-      <mesh position={[0, ROOM_HEIGHT / 2 - 0.22, 0]}>
-        <cylinderGeometry args={[0.16, 0.2, ROOM_HEIGHT - 1, 12]} />
-        <meshStandardMaterial color="#e0c060" roughness={0.6} metalness={0.35} />
+      <mesh position={[0, 0.95, 0]}>
+        <coneGeometry args={[0.55, 1.3, 8]} />
+        <meshStandardMaterial color="#2f5233" roughness={0.85} />
       </mesh>
-      <mesh position={[0, ROOM_HEIGHT - 0.62, 0]}>
-        <cylinderGeometry args={[0.3, 0.17, 0.32, 8]} />
-        <meshStandardMaterial color="#d4b050" roughness={0.55} metalness={0.4} />
-      </mesh>
-      <mesh position={[0, ROOM_HEIGHT - 0.4, 0]}>
-        <boxGeometry args={[0.68, 0.18, 0.68]} />
-        <meshStandardMaterial color="#c09030" roughness={0.55} metalness={0.45} />
+      <mesh position={[0, 1.35, 0]}>
+        <coneGeometry args={[0.4, 0.9, 8]} />
+        <meshStandardMaterial color="#356339" roughness={0.85} />
       </mesh>
     </group>
   );
 }
 
-function Columns() {
+function TreeRows() {
+  const count = 7;
+  const inset = 1.1;
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    const z = THREE.MathUtils.lerp(-GROUND_DEPTH / 2 + 1.5, GROUND_DEPTH / 2 - 1.5, i / (count - 1));
+    positions.push([GROUND_WIDTH / 2 - inset, 0, z]);
+    positions.push([-GROUND_WIDTH / 2 + inset, 0, z]);
+  }
+  return positions.map((p, i) => <Tree key={i} position={p} />);
+}
+
+function GardenBed({ position, color }) {
   return (
-    <>
-      {Array.from({ length: COL_COUNT }, (_, i) => {
-        const angle = (i / COL_COUNT) * Math.PI * 2;
-        return (
-          <Column
-            key={i}
-            position={[Math.cos(angle) * COL_RADIUS, 0, Math.sin(angle) * COL_RADIUS]}
-          />
-        );
-      })}
-    </>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position}>
+      <ringGeometry args={[0.5, 0.85, 24]} />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.25} roughness={0.7} />
+    </mesh>
   );
 }
 
-function Chandelier() {
-  const ringRef = useRef();
-  useFrame((_, delta) => {
-    if (ringRef.current) ringRef.current.rotation.y += delta * 0.25;
-  });
+function GardenBeds() {
+  const beds = [
+    [3.6, 4.6, "#d9558f"],
+    [-3.6, 4.6, "#d9558f"],
+    [3.4, -2.2, "#7050b0"],
+    [-3.4, -2.2, "#7050b0"],
+  ];
+  return beds.map(([x, z, color], i) => <GardenBed key={i} position={[x, 0.02, z]} color={color} />);
+}
 
+function Fountain() {
+  const z = MANSION_Z + 5.5;
   return (
-    <group position={[0, ROOM_HEIGHT - 0.45, 0]}>
-      {/* bright core orb */}
-      <mesh>
-        <sphereGeometry args={[0.32, 16, 16]} />
-        <meshStandardMaterial color="#ffffff" emissive="#fff0cc" emissiveIntensity={6} />
+    <group position={[0, 0, z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+        <circleGeometry args={[1.7, 32]} />
+        <meshStandardMaterial color="#3f9fc9" roughness={0.15} metalness={0.2} />
       </mesh>
-      <group ref={ringRef}>
-        {/* outer ring — gold */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.82, 0.05, 6, 32]} />
-          <meshStandardMaterial color="#ffc300" emissive="#ffc300" emissiveIntensity={2} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+        <ringGeometry args={[1.7, 1.85, 32]} />
+        <meshStandardMaterial color="#f2ead6" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.14, 0.18, 1.0, 10]} />
+        <meshStandardMaterial color="#c9a02c" metalness={0.5} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 1.05, 0]}>
+        <sphereGeometry args={[0.22, 14, 14]} />
+        <meshStandardMaterial color="#fff6d8" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.3} metalness={0.4} />
+      </mesh>
+      <Sparkles count={20} scale={[2.2, 1.2, 2.2]} size={1.1} speed={0.4} color="#ffffff" opacity={0.6} />
+    </group>
+  );
+}
+
+function Mansion() {
+  return (
+    <group position={[0, 0, MANSION_Z]}>
+      <mesh position={[0, 0.08, 1.3]}>
+        <boxGeometry args={[4.6, 0.16, 1.0]} />
+        <meshStandardMaterial color="#d8cdb2" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.24, 0.9]}>
+        <boxGeometry args={[4.0, 0.16, 0.9]} />
+        <meshStandardMaterial color="#d8cdb2" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 1.1, 0]}>
+        <boxGeometry args={[5.2, 1.8, 2.2]} />
+        <meshStandardMaterial color="#e7ddc4" roughness={0.6} />
+      </mesh>
+      {[-1.8, -0.9, 0.9, 1.8].map((x) => (
+        <mesh key={x} position={[x, 1.5, 1.15]}>
+          <cylinderGeometry args={[0.16, 0.18, 2.0, 10]} />
+          <meshStandardMaterial color="#f2ead6" roughness={0.5} />
         </mesh>
-        {/* inner ring — cyan */}
-        <mesh rotation={[Math.PI / 2, 0.4, 0]}>
-          <torusGeometry args={[0.46, 0.035, 6, 24]} />
-          <meshStandardMaterial color="#00d8ff" emissive="#00d8ff" emissiveIntensity={2} />
-        </mesh>
-        {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((angle, i) => (
-          <mesh key={i} position={[Math.cos(angle) * 0.82, 0.44, Math.sin(angle) * 0.82]}>
-            <cylinderGeometry args={[0.013, 0.013, 0.88, 4]} />
-            <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.6} />
-          </mesh>
-        ))}
-      </group>
-      {/* main warm light */}
-      <pointLight intensity={7} color="#fff5cc" distance={ROOM_RADIUS * 2.6} decay={1.1} />
-      {/* cyan accent from chandelier */}
-      <pointLight intensity={2.5} color="#00d8ff" distance={9} decay={2} position={[0, -0.6, 0]} />
+      ))}
+      <mesh position={[0, 2.9, -0.6]}>
+        <boxGeometry args={[3.2, 1.4, 1.6]} />
+        <meshStandardMaterial color="#e7ddc4" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 2.55, 0.2]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[3.1, 1.0, 4]} />
+        <meshStandardMaterial color="#8a7550" roughness={0.6} />
+      </mesh>
     </group>
   );
 }
@@ -186,7 +217,7 @@ function Chandelier() {
 function GemOrb({ state, active }) {
   const ref = useRef();
   const color = STOP_COLORS[state] || STOP_COLORS.default;
-  const gemColor = state === "default" ? "#cc44ff" : color;
+  const gemColor = state === "default" ? "#c9a02c" : color;
 
   useFrame(() => {
     if (!ref.current) return;
@@ -199,7 +230,7 @@ function GemOrb({ state, active }) {
   return (
     <group ref={ref} position={[0, 1.35, 0]}>
       <mesh>
-        <icosahedronGeometry args={[0.24, 1]} />
+        <icosahedronGeometry args={[0.22, 1]} />
         <meshStandardMaterial
           color={gemColor}
           emissive={gemColor}
@@ -222,8 +253,8 @@ function Pedestal({ position, label, state, onClick, index }) {
   return (
     <group position={position}>
       <mesh position={[0, 0.06, 0]}>
-        <cylinderGeometry args={[0.55, 0.62, 0.12, 16]} />
-        <meshStandardMaterial color="#3a1870" roughness={0.65} metalness={0.4} />
+        <cylinderGeometry args={[0.5, 0.58, 0.12, 16]} />
+        <meshStandardMaterial color="#e7ddc4" roughness={0.6} />
       </mesh>
       <mesh
         position={[0, 0.57, 0]}
@@ -231,7 +262,7 @@ function Pedestal({ position, label, state, onClick, index }) {
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <cylinderGeometry args={[0.36, 0.46, 0.97, 16]} />
+        <cylinderGeometry args={[0.32, 0.4, 0.97, 16]} />
         <meshStandardMaterial
           color={shaftColor}
           emissive={shaftColor}
@@ -241,19 +272,24 @@ function Pedestal({ position, label, state, onClick, index }) {
         />
       </mesh>
       <mesh position={[0, 1.09, 0]}>
-        <cylinderGeometry args={[0.43, 0.37, 0.1, 16]} />
-        <meshStandardMaterial color="#3a1870" roughness={0.65} metalness={0.4} />
+        <cylinderGeometry args={[0.4, 0.34, 0.1, 16]} />
+        <meshStandardMaterial color="#e7ddc4" roughness={0.6} />
       </mesh>
       <GemOrb state={state} active={active} />
-      <Text
-        position={[0, -0.2, 0]}
-        fontSize={0.2}
-        color={hovered ? "#ffc300" : "#d0b8ff"}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {`${index + 1}. ${label}`}
-      </Text>
+      <Html position={[0, -0.3, 0]} center distanceFactor={11} style={{ pointerEvents: "none" }}>
+        <div
+          className="mp-mono"
+          style={{
+            fontSize: 12,
+            color: hovered ? "#ffc300" : "#f2ead6",
+            textShadow: "0 1px 5px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9)",
+            whiteSpace: "nowrap",
+            textAlign: "center",
+          }}
+        >
+          {index + 1}. {label}
+        </div>
+      </Html>
     </group>
   );
 }
@@ -263,32 +299,25 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
   const activeIndex = stops.findIndex((s) => s.id === activeStopId);
 
   return (
-    <div style={{ width: "100%", height: 440, borderRadius: 12, overflow: "hidden", border: "1px solid #6b3fa0" }}>
-      <Canvas camera={{ position: [0, 6, 10], fov: 50 }}>
-        <color attach="background" args={["#0d0820"]} />
-        <fog attach="fog" args={["#0d0820", 16, 30]} />
+    <div style={{ width: "100%", height: 460, borderRadius: 12, overflow: "hidden", border: "1px solid #3c4c63" }}>
+      <Canvas camera={{ position: [0, 16, 20], fov: 40 }}>
+        <color attach="background" args={["#bfe3f5"]} />
+        <fog attach="fog" args={["#bfe3f5", 28, 56]} />
 
-        {/* brighter ambient — warm purple */}
-        <ambientLight intensity={0.55} color="#7050b0" />
+        <ambientLight intensity={0.9} color="#ffffff" />
+        <directionalLight position={[8, 20, 10]} intensity={2.2} color="#fff8e8" />
+        <directionalLight position={[-10, 8, -6]} intensity={0.4} color="#cfe8fa" />
 
-        {/* four coloured wall-bounce lights */}
-        <pointLight position={[ ROOM_RADIUS - 1,  3,  0]} intensity={2.0} color="#ff3d82" distance={13} decay={2} />
-        <pointLight position={[-(ROOM_RADIUS - 1), 3,  0]} intensity={2.0} color="#00d8ff" distance={13} decay={2} />
-        <pointLight position={[0, 3,  ROOM_RADIUS - 1]} intensity={2.0} color="#ffc300" distance={13} decay={2} />
-        <pointLight position={[0, 3, -(ROOM_RADIUS - 1)]} intensity={2.0} color="#cc44ff" distance={13} decay={2} />
-        {/* diagonal fills */}
-        <pointLight position={[ 5, 1,  5]} intensity={1.0} color="#00ff88" distance={10} decay={2} />
-        <pointLight position={[-5, 1, -5]} intensity={1.0} color="#ff8844" distance={10} decay={2} />
+        <Lawn />
+        <Walkway />
+        <HedgeBorder />
+        <Gate />
+        <TreeRows />
+        <GardenBeds />
+        <Fountain />
+        <Mansion />
 
-        <PalaceFloor />
-        <PalaceWalls />
-        <Columns />
-        <Chandelier />
-
-        {/* layered sparkles — gold + purple + cyan */}
-        <Sparkles count={60} scale={14} size={0.9} speed={0.18} color="#ffc300" opacity={0.3} />
-        <Sparkles count={35} scale={10} size={0.7} speed={0.13} color="#cc44ff" opacity={0.25} />
-        <Sparkles count={25} scale={8}  size={0.6} speed={0.22} color="#00d8ff" opacity={0.22} />
+        <Sparkles count={30} scale={[GROUND_WIDTH - 1, 3, GROUND_DEPTH - 1]} size={0.6} speed={0.1} color="#ffffff" opacity={0.2} />
 
         {stops.map((s, i) => (
           <Pedestal
@@ -303,9 +332,9 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
 
         {activeIndex >= 0 && overlayContent && (
           <Html
-            position={[positions[activeIndex][0], 2.3, positions[activeIndex][2]]}
+            position={[positions[activeIndex][0], 2.1, positions[activeIndex][2]]}
             center
-            distanceFactor={8}
+            distanceFactor={11}
           >
             {overlayContent}
           </Html>
@@ -313,9 +342,9 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
 
         <OrbitControls
           enablePan={false}
-          minDistance={4}
-          maxDistance={13}
-          maxPolarAngle={Math.PI / 2.15}
+          minDistance={10}
+          maxDistance={32}
+          maxPolarAngle={Math.PI / 2.3}
         />
       </Canvas>
     </div>
