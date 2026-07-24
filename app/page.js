@@ -2,8 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState, useCallback } from "react";
-import { Plus, X, Check, Clock, Trash2, ArrowLeft, RotateCcw, Flame, MapPin } from "lucide-react";
-import { loadPalaces, savePalaces } from "../lib/storage";
+import { Plus, X, Check, Clock, Trash2, ArrowLeft, RotateCcw, Flame, MapPin, Lock } from "lucide-react";
 import { INTERVALS, uid, todayISO, addDays, daysUntil, orderedItems } from "../lib/utils";
 
 // Three.js touches the DOM/canvas directly — must be client-only, no SSR.
@@ -12,16 +11,31 @@ const Scene3D = dynamic(() => import("../components/Scene3D"), { ssr: false });
 export default function Page() {
   const [palaces, setPalaces] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [authed, setAuthed] = useState(false);
   const [view, setView] = useState({ screen: "dashboard" });
 
   useEffect(() => {
-    setPalaces(loadPalaces());
-    setLoaded(true);
+    fetch("/api/palaces")
+      .then(async (res) => {
+        if (res.status === 401) {
+          setAuthed(false);
+          setLoaded(true);
+          return;
+        }
+        setPalaces(await res.json());
+        setAuthed(true);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
   }, []);
 
   const persist = useCallback((next) => {
     setPalaces(next);
-    savePalaces(next);
+    fetch("/api/palaces", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(next),
+    }).catch(() => {});
   }, []);
 
   const updatePalace = (palaceId, updater) => {
@@ -43,6 +57,21 @@ export default function Page() {
         <div className="mp-mono" style={{ textAlign: "center", padding: 60, color: "var(--muted)" }}>
           loading your palaces…
         </div>
+      </Shell>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <Shell>
+        <PasscodeGate
+          onAuthed={() => {
+            setAuthed(true);
+            fetch("/api/palaces")
+              .then((res) => res.json())
+              .then(setPalaces);
+          }}
+        />
       </Shell>
     );
   }
@@ -80,6 +109,55 @@ export default function Page() {
         <ResultsScreen palace={currentPalace} list={currentList} result={view.result} setView={setView} />
       )}
     </Shell>
+  );
+}
+
+function PasscodeGate({ onAuthed }) {
+  const [passcode, setPasscode] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!passcode || submitting) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      if (res.ok) {
+        onAuthed();
+      } else {
+        setError("Incorrect passcode");
+      }
+    } catch {
+      setError("Couldn't reach the server — try again");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mp-fade-in" style={{ textAlign: "center", padding: "60px 10px" }}>
+      <Lock size={22} color="var(--brass)" style={{ marginBottom: 14 }} />
+      <p className="mp-display" style={{ fontSize: 19, marginBottom: 20 }}>Enter passcode</p>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+        <input
+          autoFocus
+          type="password"
+          value={passcode}
+          onChange={(e) => setPasscode(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          style={{ ...inputStyle, maxWidth: 200 }}
+        />
+        <button onClick={submit} disabled={submitting} className="mp-btn" style={{ ...btnPrimary, opacity: submitting ? 0.6 : 1 }}>
+          <Check size={16} />
+        </button>
+      </div>
+      {error && <p style={{ color: "var(--danger)", fontSize: 13, marginTop: 14 }}>{error}</p>}
+    </div>
   );
 }
 
