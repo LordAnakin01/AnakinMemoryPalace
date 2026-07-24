@@ -162,11 +162,11 @@ function Fountain() {
     <group position={[0, 0, z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
         <circleGeometry args={[1.7, 32]} />
-        <meshStandardMaterial color="#1c3b42" roughness={0.25} metalness={0.1} />
+        <meshStandardMaterial color="#3f9fc9" roughness={0.15} metalness={0.2} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[1.7, 1.85, 32]} />
-        <meshStandardMaterial color="#d8cdb2" roughness={0.6} />
+        <meshStandardMaterial color="#f2ead6" roughness={0.6} />
       </mesh>
       <mesh position={[0, 0.5, 0]}>
         <cylinderGeometry args={[0.14, 0.18, 1.0, 10]} />
@@ -174,10 +174,9 @@ function Fountain() {
       </mesh>
       <mesh position={[0, 1.05, 0]}>
         <sphereGeometry args={[0.22, 14, 14]} />
-        <meshStandardMaterial color="#ffe8a3" emissive="#ffc300" emissiveIntensity={0.8} roughness={0.3} metalness={0.4} />
+        <meshStandardMaterial color="#fff6d8" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.3} metalness={0.4} />
       </mesh>
-      <pointLight position={[0, 1.2, 0]} intensity={1.6} color="#ffd9a0" distance={5} decay={2} />
-      <Sparkles count={20} scale={[2.2, 1.2, 2.2]} size={1.1} speed={0.4} color="#bfe8ff" opacity={0.5} />
+      <Sparkles count={20} scale={[2.2, 1.2, 2.2]} size={1.1} speed={0.4} color="#ffffff" opacity={0.6} />
     </group>
   );
 }
@@ -211,7 +210,6 @@ function Mansion() {
         <coneGeometry args={[3.1, 1.0, 4]} />
         <meshStandardMaterial color="#8a7550" roughness={0.6} />
       </mesh>
-      <pointLight position={[0, 2.2, 1.6]} intensity={2.5} color="#ffdca0" distance={7} decay={2} />
     </group>
   );
 }
@@ -303,12 +301,12 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
   return (
     <div style={{ width: "100%", height: 460, borderRadius: 12, overflow: "hidden", border: "1px solid #3c4c63" }}>
       <Canvas camera={{ position: [0, 16, 20], fov: 40 }}>
-        <color attach="background" args={["#26364a"]} />
-        <fog attach="fog" args={["#26364a", 22, 46]} />
+        <color attach="background" args={["#bfe3f5"]} />
+        <fog attach="fog" args={["#bfe3f5", 28, 56]} />
 
-        <ambientLight intensity={0.65} color="#9fb0c9" />
-        <directionalLight position={[10, 12, 6]} intensity={1.5} color="#ffd9a0" />
-        <directionalLight position={[-8, 6, -4]} intensity={0.35} color="#7fa6c9" />
+        <ambientLight intensity={0.9} color="#ffffff" />
+        <directionalLight position={[8, 20, 10]} intensity={2.2} color="#fff8e8" />
+        <directionalLight position={[-10, 8, -6]} intensity={0.4} color="#cfe8fa" />
 
         <Lawn />
         <Walkway />
@@ -319,7 +317,7 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
         <Fountain />
         <Mansion />
 
-        <Sparkles count={40} scale={[GROUND_WIDTH - 1, 3, GROUND_DEPTH - 1]} size={0.8} speed={0.15} color="#ffe8a3" opacity={0.35} />
+        <Sparkles count={30} scale={[GROUND_WIDTH - 1, 3, GROUND_DEPTH - 1]} size={0.6} speed={0.1} color="#ffffff" opacity={0.2} />
 
         {stops.map((s, i) => (
           <Pedestal
