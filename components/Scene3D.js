@@ -6,18 +6,18 @@ import { OrbitControls, Text, Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 const STOP_COLORS = {
-  default: "#3c4c63",
-  hover: "#5a6d8c",
-  active: "#c9a02c",
-  correct: "#7fa66b",
-  wrong: "#b15c4a",
+  default: "#6b3fa0",
+  hover:   "#9060d0",
+  active:  "#ffc300",
+  correct: "#00c853",
+  wrong:   "#ff4444",
 };
 
-const ROOM_RADIUS = 7;
-const ROOM_HEIGHT = 5.8;
+const ROOM_RADIUS   = 7;
+const ROOM_HEIGHT   = 5.8;
 const PEDESTAL_RADIUS = 4.2;
-const COL_RADIUS = ROOM_RADIUS - 0.55;
-const COL_COUNT = 12;
+const COL_RADIUS    = ROOM_RADIUS - 0.55;
+const COL_COUNT     = 12;
 
 function layoutPositions(count) {
   return Array.from({ length: count }, (_, i) => {
@@ -29,29 +29,35 @@ function layoutPositions(count) {
 function PalaceFloor() {
   return (
     <group>
+      {/* base — deep jewel teal */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[ROOM_RADIUS, 48]} />
-        <meshStandardMaterial color="#192030" roughness={0.92} metalness={0.08} />
+        <meshStandardMaterial color="#0a2230" roughness={0.85} metalness={0.15} />
       </mesh>
-      {/* outer ring */}
+      {/* outer gold ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <ringGeometry args={[ROOM_RADIUS - 0.55, ROOM_RADIUS - 0.15, 48]} />
-        <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={0.28} roughness={0.4} />
+        <meshStandardMaterial color="#ffc300" emissive="#ffc300" emissiveIntensity={0.6} roughness={0.3} />
       </mesh>
-      {/* pedestal ring band */}
+      {/* rose ring */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
+        <ringGeometry args={[ROOM_RADIUS - 1.25, ROOM_RADIUS - 1.0, 48]} />
+        <meshStandardMaterial color="#ff3d82" emissive="#ff3d82" emissiveIntensity={0.5} />
+      </mesh>
+      {/* cyan pedestal-track ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <ringGeometry args={[PEDESTAL_RADIUS + 0.7, PEDESTAL_RADIUS + 0.9, 48]} />
-        <meshStandardMaterial color="#3c4c63" emissive="#3c4c63" emissiveIntensity={0.18} />
+        <meshStandardMaterial color="#00d8e0" emissive="#00d8e0" emissiveIntensity={0.45} />
       </mesh>
-      {/* center medallion glow ring */}
+      {/* amethyst inner ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <ringGeometry args={[1.45, 1.65, 48]} />
-        <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={0.35} />
+        <meshStandardMaterial color="#cc44ff" emissive="#cc44ff" emissiveIntensity={0.6} />
       </mesh>
-      {/* center disc */}
+      {/* centre disc */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <circleGeometry args={[1.4, 48]} />
-        <meshStandardMaterial color="#233043" roughness={0.75} />
+        <meshStandardMaterial color="#1a0838" roughness={0.7} />
       </mesh>
     </group>
   );
@@ -60,35 +66,40 @@ function PalaceFloor() {
 function PalaceWalls() {
   return (
     <group>
-      {/* inner wall surface */}
+      {/* inner wall — royal purple */}
       <mesh position={[0, ROOM_HEIGHT / 2, 0]}>
         <cylinderGeometry args={[ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT, 24, 1, true]} />
-        <meshStandardMaterial color="#1c2b3f" side={THREE.BackSide} roughness={0.92} />
+        <meshStandardMaterial color="#2a1258" side={THREE.BackSide} roughness={0.88} />
       </mesh>
       {/* ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT, 0]}>
         <circleGeometry args={[ROOM_RADIUS, 24]} />
-        <meshStandardMaterial color="#111820" side={THREE.BackSide} />
+        <meshStandardMaterial color="#180830" side={THREE.BackSide} />
       </mesh>
-      {/* ceiling centre glow */}
+      {/* ceiling centre — cyan glow */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT - 0.01, 0]}>
-        <circleGeometry args={[1.9, 24]} />
-        <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={0.18} side={THREE.BackSide} />
+        <circleGeometry args={[2.0, 24]} />
+        <meshStandardMaterial color="#00d8ff" emissive="#00d8ff" emissiveIntensity={0.35} side={THREE.BackSide} />
       </mesh>
-      {/* baseboard */}
+      {/* baseboard — gold */}
       <mesh position={[0, 0.26, 0]}>
         <torusGeometry args={[ROOM_RADIUS - 0.04, 0.22, 6, 48]} />
-        <meshStandardMaterial color="#26374a" roughness={0.82} />
+        <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.55} />
       </mesh>
-      {/* cornice */}
+      {/* cornice — gold */}
       <mesh position={[0, ROOM_HEIGHT - 0.32, 0]}>
         <torusGeometry args={[ROOM_RADIUS - 0.04, 0.22, 6, 48]} />
-        <meshStandardMaterial color="#26374a" roughness={0.82} />
+        <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.3} roughness={0.55} />
       </mesh>
-      {/* mid wall band (brass) */}
-      <mesh position={[0, ROOM_HEIGHT * 0.54, 0]}>
-        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.06, 6, 48]} />
-        <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={0.14} />
+      {/* upper band — rose */}
+      <mesh position={[0, ROOM_HEIGHT * 0.62, 0]}>
+        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.07, 6, 48]} />
+        <meshStandardMaterial color="#ff3d82" emissive="#ff3d82" emissiveIntensity={0.5} />
+      </mesh>
+      {/* lower band — cyan */}
+      <mesh position={[0, ROOM_HEIGHT * 0.28, 0]}>
+        <torusGeometry args={[ROOM_RADIUS - 0.04, 0.05, 6, 48]} />
+        <meshStandardMaterial color="#00d8e0" emissive="#00d8e0" emissiveIntensity={0.4} />
       </mesh>
     </group>
   );
@@ -97,25 +108,21 @@ function PalaceWalls() {
 function Column({ position }) {
   return (
     <group position={position}>
-      {/* base */}
       <mesh position={[0, 0.16, 0]}>
         <cylinderGeometry args={[0.24, 0.3, 0.32, 8]} />
-        <meshStandardMaterial color="#26374a" roughness={0.85} />
+        <meshStandardMaterial color="#d4b050" roughness={0.55} metalness={0.4} />
       </mesh>
-      {/* shaft */}
       <mesh position={[0, ROOM_HEIGHT / 2 - 0.22, 0]}>
         <cylinderGeometry args={[0.16, 0.2, ROOM_HEIGHT - 1, 12]} />
-        <meshStandardMaterial color="#2c3e55" roughness={0.86} />
+        <meshStandardMaterial color="#e0c060" roughness={0.6} metalness={0.35} />
       </mesh>
-      {/* capital flare */}
       <mesh position={[0, ROOM_HEIGHT - 0.62, 0]}>
         <cylinderGeometry args={[0.3, 0.17, 0.32, 8]} />
-        <meshStandardMaterial color="#26374a" roughness={0.85} />
+        <meshStandardMaterial color="#d4b050" roughness={0.55} metalness={0.4} />
       </mesh>
-      {/* abacus block */}
       <mesh position={[0, ROOM_HEIGHT - 0.4, 0]}>
         <boxGeometry args={[0.68, 0.18, 0.68]} />
-        <meshStandardMaterial color="#1c2b3f" roughness={0.85} />
+        <meshStandardMaterial color="#c09030" roughness={0.55} metalness={0.45} />
       </mesh>
     </group>
   );
@@ -140,29 +147,38 @@ function Columns() {
 function Chandelier() {
   const ringRef = useRef();
   useFrame((_, delta) => {
-    if (ringRef.current) ringRef.current.rotation.y += delta * 0.12;
+    if (ringRef.current) ringRef.current.rotation.y += delta * 0.25;
   });
 
   return (
     <group position={[0, ROOM_HEIGHT - 0.45, 0]}>
-      {/* central orb */}
+      {/* bright core orb */}
       <mesh>
-        <sphereGeometry args={[0.28, 16, 16]} />
-        <meshStandardMaterial color="#c9a02c" emissive="#c9a02c" emissiveIntensity={3.5} />
+        <sphereGeometry args={[0.32, 16, 16]} />
+        <meshStandardMaterial color="#ffffff" emissive="#fff0cc" emissiveIntensity={6} />
       </mesh>
       <group ref={ringRef}>
+        {/* outer ring — gold */}
         <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.78, 0.04, 6, 32]} />
-          <meshStandardMaterial color="#8a7020" emissive="#c9a02c" emissiveIntensity={0.7} />
+          <torusGeometry args={[0.82, 0.05, 6, 32]} />
+          <meshStandardMaterial color="#ffc300" emissive="#ffc300" emissiveIntensity={2} />
+        </mesh>
+        {/* inner ring — cyan */}
+        <mesh rotation={[Math.PI / 2, 0.4, 0]}>
+          <torusGeometry args={[0.46, 0.035, 6, 24]} />
+          <meshStandardMaterial color="#00d8ff" emissive="#00d8ff" emissiveIntensity={2} />
         </mesh>
         {[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map((angle, i) => (
-          <mesh key={i} position={[Math.cos(angle) * 0.78, 0.42, Math.sin(angle) * 0.78]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.84, 4]} />
-            <meshStandardMaterial color="#5a4a10" />
+          <mesh key={i} position={[Math.cos(angle) * 0.82, 0.44, Math.sin(angle) * 0.82]}>
+            <cylinderGeometry args={[0.013, 0.013, 0.88, 4]} />
+            <meshStandardMaterial color="#c8a030" emissive="#ffc300" emissiveIntensity={0.6} />
           </mesh>
         ))}
       </group>
-      <pointLight intensity={3} color="#f4e9c9" distance={ROOM_RADIUS * 2.2} decay={1.4} />
+      {/* main warm light */}
+      <pointLight intensity={7} color="#fff5cc" distance={ROOM_RADIUS * 2.6} decay={1.1} />
+      {/* cyan accent from chandelier */}
+      <pointLight intensity={2.5} color="#00d8ff" distance={9} decay={2} position={[0, -0.6, 0]} />
     </group>
   );
 }
@@ -170,29 +186,29 @@ function Chandelier() {
 function GemOrb({ state, active }) {
   const ref = useRef();
   const color = STOP_COLORS[state] || STOP_COLORS.default;
-  const gemColor = state === "default" ? "#c9a02c" : color;
+  const gemColor = state === "default" ? "#cc44ff" : color;
 
   useFrame(() => {
     if (!ref.current) return;
-    ref.current.rotation.y += active ? 0.028 : 0.006;
+    ref.current.rotation.y += active ? 0.035 : 0.008;
     ref.current.position.y = active
-      ? 1.35 + Math.sin(Date.now() * 0.003) * 0.1
+      ? 1.35 + Math.sin(Date.now() * 0.003) * 0.12
       : 1.35;
   });
 
   return (
     <group ref={ref} position={[0, 1.35, 0]}>
       <mesh>
-        <icosahedronGeometry args={[0.22, 1]} />
+        <icosahedronGeometry args={[0.24, 1]} />
         <meshStandardMaterial
           color={gemColor}
           emissive={gemColor}
-          emissiveIntensity={active ? 2.2 : 0.55}
-          roughness={0.1}
-          metalness={0.7}
+          emissiveIntensity={active ? 3.5 : 1.0}
+          roughness={0.05}
+          metalness={0.6}
         />
       </mesh>
-      {active && <pointLight color={gemColor} intensity={4.5} distance={2.8} decay={2} />}
+      {active && <pointLight color={gemColor} intensity={7} distance={4} decay={2} />}
     </group>
   );
 }
@@ -205,12 +221,10 @@ function Pedestal({ position, label, state, onClick, index }) {
 
   return (
     <group position={position}>
-      {/* base plate */}
       <mesh position={[0, 0.06, 0]}>
         <cylinderGeometry args={[0.55, 0.62, 0.12, 16]} />
-        <meshStandardMaterial color="#1e2d40" roughness={0.82} metalness={0.22} />
+        <meshStandardMaterial color="#3a1870" roughness={0.65} metalness={0.4} />
       </mesh>
-      {/* shaft — clickable */}
       <mesh
         position={[0, 0.57, 0]}
         onClick={(e) => { e.stopPropagation(); onClick(); }}
@@ -220,21 +234,21 @@ function Pedestal({ position, label, state, onClick, index }) {
         <cylinderGeometry args={[0.36, 0.46, 0.97, 16]} />
         <meshStandardMaterial
           color={shaftColor}
-          emissive={active ? shaftColor : "#000000"}
-          emissiveIntensity={active ? 0.55 : 0}
-          roughness={0.58}
+          emissive={shaftColor}
+          emissiveIntensity={active ? 1.0 : 0.25}
+          roughness={0.45}
+          metalness={0.2}
         />
       </mesh>
-      {/* top cap */}
       <mesh position={[0, 1.09, 0]}>
         <cylinderGeometry args={[0.43, 0.37, 0.1, 16]} />
-        <meshStandardMaterial color="#1e2d40" roughness={0.82} metalness={0.3} />
+        <meshStandardMaterial color="#3a1870" roughness={0.65} metalness={0.4} />
       </mesh>
       <GemOrb state={state} active={active} />
       <Text
         position={[0, -0.2, 0]}
         fontSize={0.2}
-        color={hovered ? "#c9a02c" : "#8a93a6"}
+        color={hovered ? "#ffc300" : "#d0b8ff"}
         anchorX="center"
         anchorY="middle"
       >
@@ -249,24 +263,32 @@ export default function Scene3D({ stops, stateByStop = {}, activeStopId, onStopC
   const activeIndex = stops.findIndex((s) => s.id === activeStopId);
 
   return (
-    <div style={{ width: "100%", height: 440, borderRadius: 12, overflow: "hidden", border: "1px solid #3c4c63" }}>
+    <div style={{ width: "100%", height: 440, borderRadius: 12, overflow: "hidden", border: "1px solid #6b3fa0" }}>
       <Canvas camera={{ position: [0, 6, 10], fov: 50 }}>
-        <color attach="background" args={["#0d1319"]} />
-        <fog attach="fog" args={["#0d1319", 15, 28]} />
+        <color attach="background" args={["#0d0820"]} />
+        <fog attach="fog" args={["#0d0820", 16, 30]} />
 
-        <ambientLight intensity={0.18} color="#2a3a5a" />
-        {/* wall fill lights — cool blue bounce */}
-        <pointLight position={[ROOM_RADIUS - 1, 3, 0]} intensity={0.45} color="#2a4060" distance={11} decay={2} />
-        <pointLight position={[-(ROOM_RADIUS - 1), 3, 0]} intensity={0.45} color="#2a4060" distance={11} decay={2} />
-        <pointLight position={[0, 3, ROOM_RADIUS - 1]} intensity={0.45} color="#2a4060" distance={11} decay={2} />
-        <pointLight position={[0, 3, -(ROOM_RADIUS - 1)]} intensity={0.45} color="#2a4060" distance={11} decay={2} />
+        {/* brighter ambient — warm purple */}
+        <ambientLight intensity={0.55} color="#7050b0" />
+
+        {/* four coloured wall-bounce lights */}
+        <pointLight position={[ ROOM_RADIUS - 1,  3,  0]} intensity={2.0} color="#ff3d82" distance={13} decay={2} />
+        <pointLight position={[-(ROOM_RADIUS - 1), 3,  0]} intensity={2.0} color="#00d8ff" distance={13} decay={2} />
+        <pointLight position={[0, 3,  ROOM_RADIUS - 1]} intensity={2.0} color="#ffc300" distance={13} decay={2} />
+        <pointLight position={[0, 3, -(ROOM_RADIUS - 1)]} intensity={2.0} color="#cc44ff" distance={13} decay={2} />
+        {/* diagonal fills */}
+        <pointLight position={[ 5, 1,  5]} intensity={1.0} color="#00ff88" distance={10} decay={2} />
+        <pointLight position={[-5, 1, -5]} intensity={1.0} color="#ff8844" distance={10} decay={2} />
 
         <PalaceFloor />
         <PalaceWalls />
         <Columns />
         <Chandelier />
 
-        <Sparkles count={55} scale={14} size={0.55} speed={0.14} color="#c9a02c" opacity={0.11} />
+        {/* layered sparkles — gold + purple + cyan */}
+        <Sparkles count={60} scale={14} size={0.9} speed={0.18} color="#ffc300" opacity={0.3} />
+        <Sparkles count={35} scale={10} size={0.7} speed={0.13} color="#cc44ff" opacity={0.25} />
+        <Sparkles count={25} scale={8}  size={0.6} speed={0.22} color="#00d8ff" opacity={0.22} />
 
         {stops.map((s, i) => (
           <Pedestal
