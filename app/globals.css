@@ -1,0 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --ink: #1b2129;
+  --ink-2: #191e25;
+  --blueprint: #233043;
+  --line: #3c4c63;
+  --parchment: #e9e2ce;
+  --muted: #8a93a6;
+  --brass: #c9a02c;
+  --brass-dim: #8a7020;
+  --success: #7fa66b;
+  --danger: #b15c4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+  color: var(--parchment);
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+}
+
+.mp-display {
+  font-family: "Fraunces", serif;
+}
+
+.mp-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.mp-fade-in {
+  animation: mpFadeIn 0.35s ease both;
+}
+
+@keyframes mpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mp-pulse {
+  animation: mpPulse 2s ease-in-out infinite;
+}
+
+@keyframes mpPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.mp-btn {
+  transition: all 0.15s ease;
+}
+.mp-btn:hover {
+  filter: brightness(1.1);
+}
+.mp-btn:active {
+  transform: scale(0.97);
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+button:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
