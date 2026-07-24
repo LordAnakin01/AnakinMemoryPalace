@@ -22,8 +22,10 @@ export default function Page() {
           setLoaded(true);
           return;
         }
-        setPalaces(await res.json());
-        setAuthed(true);
+        if (res.ok) {
+          setPalaces(await res.json());
+          setAuthed(true);
+        }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -68,8 +70,9 @@ export default function Page() {
           onAuthed={() => {
             setAuthed(true);
             fetch("/api/palaces")
-              .then((res) => res.json())
-              .then(setPalaces);
+              .then((res) => (res.ok ? res.json() : []))
+              .then(setPalaces)
+              .catch(() => {});
           }}
         />
       </Shell>
